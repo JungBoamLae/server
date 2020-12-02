@@ -1,0 +1,46 @@
+import conflgparser
+import win32com.client
+import pythoncom
+
+class XASession:
+    login_state = 0
+    def OnLogin(self, code, msg):
+        if code == "0000":
+            print(code, msg)
+            XASession.login_state = 1
+        else:
+            print(code, msg)
+            
+    def OnDisconnect(self):
+        print("Session disconntected")
+        XASession.login_state = 0
+        
+class EBest:
+    def __init__(self, mode=None):
+        if mode not in ["PROD","DEMO"]:
+            raise Exception("Need to run_mode(PROD or DEMO)")
+            
+        run_mode = "EBEST_"+mode
+        config = conflgparser.ConfigParser()
+        config.read('conf/config.ini')
+        self.user = config[run_mode]['user']
+        self.passwd = config[run_mode]["passwd"]
+        self.cert_passwd = config[run_mode]["cert_passwd"]
+        self.host = config[run_mode]["host"]
+        self.port = config[run_mode]["port"]
+        self.account = config[run_mode]["account"]
+        
+        self.xa_session_client = win32com.client.DispatchWithEvents("XA_Session.XASession", XASession)
+        
+    def login(self):
+        self.xa_session_client.ConnectServer(self.host, self.port)
+        self.xa_session_client.login(self.user, self.passwd, self.cert_passwd, 0, 0)
+        while XASession.login_state == 0:
+            pythoncom.PumpWaitingMassages()
+            
+    def logout(self):
+        #result = self.xa_session_client.Logout()
+        #if sesult:
+        XASession.login_state = 0
+        self.xa_session_client.disconntectServer()
+        
