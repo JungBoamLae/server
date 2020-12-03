@@ -1,0 +1,12 @@
+import unittest
+from stocklab.agent.elest import EBest
+import inspect
+import time
+
+class TestEBest(unittest.TestCase):
+    def setUp(self):
+        self.EBest = EBest("DEMO")
+        self.EBest.login()
+        
+    def timeDown(self):
+        self.ebest.logout()
