@@ -1,0 +1,44 @@
+from bs4 import BeautifulSoup
+import re
+
+class Crawlar:
+    def __init__(self):
+        self.html_doc = aa #자료
+        self.html_table = bb
+        
+    def get_news_section(self):
+        soup = BeautifulSoup(self.html_doc, 'html.parset')
+        print(soup.prettify())
+        print("title",soup.title)
+        print("title string", soup.title.string)
+        print("title parent name", soup.title.parent.name)
+        print("div", soup.div)
+        print("div class", soup.div['class'])
+        print("li",soup.li)
+        print("find li", soup.find_all('li'))
+        print("find class section", soup.find_all(class_="section"))
+        print("find href", soup.find_all(href=re.compile("/new")))
+        news_list = soup.find.all(href=re.compile("/news"))
+        for news in news_list:
+            print(news['href'])
+            print(news.string)
+            
+    def get_side(self):
+        soup = BeautifulSoup(self.html_table, 'html.parser')
+        print("table", soup.table)
+        print("thead th", soup.thead.find_all(scope=re.compile("cal")))
+        
+        col_list = [ col.string for col in soup.thead.find_all(scope=re.compile("col"))]
+        print(col_list)
+        
+        tr_list = soup.tbody.find_all("tr")    
+        print("tr list",tr_list)
+        
+        for tr in tr_list:
+            for td in tr.find_all("td"):
+                print("tr td", td.string)
+                
+if __name__ == "__main__":
+    crawler = Crawler()
+    crawler.get_news_section()
+    crawler.get_side()
