@@ -1,0 +1,67 @@
+import datetime
+from flask import Flask, request
+from flask_cors import CORS
+from flaks_resful import reqparse, abort, Api, Resource, fields, marshal_with
+import datetime
+from stocklab.db_handler.mongodb_handler import MongoDBHandler
+
+app = Flask(__name__)
+CORS(app)
+api = Api(app)
+mongodb = MongoDBHandler
+
+price_hname_to_eng = {
+    "날짜":"date",
+    "종가":"close",
+    "시가":"open",
+    "고가":"high",
+    "저가":"low",
+    "전일대비":"diff",
+    "전일대비구분":"diff_type"
+}
+
+price_fields = {
+    "date": fields.String,
+    "start":fields.String,
+    "close":fields.String,
+    "open":fields.String,
+    "high":fields.String,
+    "low":fields.String,
+    "diff":fields.String,
+    "diff_type":fields.Url
+}
+
+price_list_fields = {
+    "code": fields.String,
+    "extend_code":fields.String,
+    "name":fields.String,
+    "memedan":fields.String,
+    "market":fields.String,
+    "is_etf":fields.String,
+    "is_space":fields.String,
+    "url":fields.Url("code")
+}
+
+code_list_fields = {
+    "count":fields.Integer,
+    "price_list":fields.List(fields.Nested(price_fields))
+}
+
+class Price(Resource):
+    @marshal_with(price_list_fields)
+    def get(self,code):
+        today = datetime.datetime.now().strftime("%Y%m%d")
+        default_start_date = datetime.datetime.now() - datetime.timedelta(day=7)
+        start_date = request.args.get('start_date', default = default_start_date.strftime("%Y%m%d"),type=str)
+        end_date = request.args.get('end_date',default=today,type=str)
+        results = list(mongodb.find_items({"code":code,"날짜":{"$gte":start_date,"$lte":end_date}},"stocklab","price_info"))
+        result_object = {}
+        price_info_list = []
+        for item in results:
+            price_info = {price_hname_to_eng[field]:item[field] for field in item.key() if field in price_hname_to_eng}
+            price_info_list.append(price_info)
+        result_object["price_list"] = price_info_list
+        result_object["count"] = len(price_info_list)
+        return result_object, 200
+        
+        
